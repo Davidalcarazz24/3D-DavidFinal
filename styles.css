@@ -1,0 +1,306 @@
+
+/* =========================================================
+   ÍNDICE (qué hay en cada parte)
+   1) Reset / Base
+   2) Variables (colores, sombras, tipografía)
+   3) Fondo / selección / anti-selección panel
+   4) Canvas (Three.js) fullscreen
+   5) Panel UI (#ui) + título
+   6) Filas (.row)
+   7) Botones (base/hover/active/disabled/focus)
+   8) Botón principal (#btnToggle + estado .is-playing)
+   9) Botones cámaras (#camFront/#camBack)
+  10) Texto ayuda (.hint, code) + utilidades (badge/kbd)
+  11) Capas opcionales (.stage-vignette, .glow-layer)
+  12) Responsive + reduced motion
+  13) Scrollbar panel
+   ========================================================= */
+
+/* =========================================================
+   1) Reset / Base
+   ========================================================= */
+*, *::before, *::after { box-sizing: border-box; }          /* box model consistente */
+html, body { height: 100%; margin: 0; padding: 0; }         /* fullscreen sin márgenes */
+
+/* =========================================================
+   2) Variables
+   ========================================================= */
+:root{
+  --bg0:#06070b;                                             /* fondo oscuro */
+  --bg1:#0b0f14;                                             /* fondo base */
+  --bg2:#0f1620;                                             /* tono extra */
+  --panel:rgba(10,12,16,.55);                                /* glass panel */
+  --panel2:rgba(12,16,22,.70);                               /* panel más sólido */
+  --border:rgba(255,255,255,.10);                            /* borde suave */
+
+  --text:rgba(255,255,255,.92);                              /* texto principal */
+  --muted:rgba(255,255,255,.70);                             /* texto secundario */
+  --muted2:rgba(255,255,255,.55);                            /* texto terciario */
+
+  --accent:#3b82f6;                                          /* acento azul */
+  --danger:#ff3b30;                                          /* acento rojo */
+  --ok:#10b981;                                              /* ok verde */
+
+  --shadow:0 18px 40px rgba(0,0,0,.40);                      /* sombra fuerte */
+  --shadowSoft:0 10px 22px rgba(0,0,0,.28);                  /* sombra suave */
+  --focus:0 0 0 3px rgba(59,130,246,.45);                    /* halo focus */
+
+  --font:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; /* tipografía */
+  --r1:10px; --r2:14px; --r3:18px;                           /* radios */
+  --s1:8px; --s2:12px; --s3:16px; --s4:20px;                 /* espaciados */
+}
+
+/* =========================================================
+   3) Fondo / selección / anti-selección panel
+   ========================================================= */
+body{
+  font-family:var(--font);                                   /* fuente global */
+  overflow:hidden;                                           /* sin scroll (canvas full) */
+  color:var(--text);                                         /* texto claro */
+  background:                                                 /* ambiente tipo estadio */
+    radial-gradient(1200px 700px at 20% 10%, rgba(59,130,246,.18), transparent 55%),
+    radial-gradient(900px 500px at 80% 15%, rgba(255,59,48,.10), transparent 50%),
+    radial-gradient(900px 600px at 50% 85%, rgba(16,185,129,.08), transparent 55%),
+    linear-gradient(180deg, var(--bg0), var(--bg1) 45%, var(--bg0));
+}
+
+::selection{ background: rgba(59,130,246,.35); }             /* selección acorde al tema */
+#ui, #ui * { user-select:none; }                             /* evita selección al clicar/arrastrar */
+
+/* =========================================================
+   4) Canvas (Three.js) fullscreen
+   ========================================================= */
+#c{
+  display:block;                                             /* elimina huecos inline */
+  width:100vw; height:100vh;                                 /* ocupa toda la ventana */
+  outline:none;                                              /* sin borde raro */
+}
+canvas{ image-rendering:auto; }                              /* render normal */
+
+/* =========================================================
+   5) Panel UI (#ui) + título
+   ========================================================= */
+#ui{
+  position:absolute;                                         /* encima del canvas */
+  top:var(--s4); left:var(--s4);                              /* esquina superior */
+  z-index:10;                                                /* por encima del 3D */
+  width:min(460px, calc(100vw - 32px));                      /* ancho adaptativo */
+  padding:14px 14px 12px;                                    /* padding cómodo */
+  border-radius:var(--r3);                                   /* esquinas suaves */
+  border:1px solid var(--border);                            /* borde sutil */
+  background:linear-gradient(180deg, rgba(16,18,24,.70), rgba(10,12,16,.40)); /* glass */
+  backdrop-filter:blur(10px);                                /* blur detrás */
+  box-shadow:var(--shadow);                                  /* profundidad */
+}
+
+#ui::before{
+  content:"";                                                /* barra decorativa */
+  display:block;
+  height:2px; border-radius:999px;
+  margin-bottom:12px;
+  opacity:.85;
+  background:linear-gradient(90deg, rgba(59,130,246,.90), rgba(16,185,129,.65), rgba(255,59,48,.80));
+}
+
+#ui h1{
+  margin:0 0 10px;                                           /* compacto */
+  font-size:16px; line-height:1.2;
+  letter-spacing:.2px;
+}
+
+/* =========================================================
+   6) Filas (.row)
+   ========================================================= */
+.row{
+  display:flex;                                              /* botones en línea */
+  gap:10px;                                                  /* separación */
+  flex-wrap:wrap;                                            /* wrap si no caben */
+  margin-bottom:10px;
+}
+.row:last-of-type{ margin-bottom:8px; }                      /* cierre visual */
+
+/* =========================================================
+   7) Botones (base/hover/active/disabled/focus)
+   ========================================================= */
+button{
+  appearance:none;                                           /* sin estilo nativo */
+  border:1px solid rgba(255,255,255,.10);                    /* borde neutro */
+  background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05)); /* glass */
+  color:var(--text);                                         /* texto */
+  padding:10px 12px;                                         /* tamaño cómodo */
+  border-radius:12px;                                        /* redondeo */
+  cursor:pointer;                                            /* mano */
+  font-weight:800; letter-spacing:.2px;                      /* look “evento” */
+  box-shadow:0 10px 18px rgba(0,0,0,.22);                    /* elevación */
+  transition:transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease;
+}
+
+button:hover{
+  transform:translateY(-1px);                                /* se levanta */
+  border-color:rgba(255,255,255,.18);                        /* más contraste */
+  background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.06));
+  box-shadow:0 14px 26px rgba(0,0,0,.28);
+}
+
+button:active{
+  transform:translateY(0);                                   /* vuelve abajo */
+  filter:brightness(.98);                                    /* leve “press” */
+}
+
+button:disabled{
+  opacity:.55;                                               /* indica bloqueo */
+  cursor:not-allowed;
+  transform:none; box-shadow:none;                           /* sin efectos */
+}
+
+button:focus-visible{
+  outline:none;                                              /* sin outline */
+  box-shadow:var(--shadowSoft), var(--focus);                /* foco accesible */
+}
+
+/* =========================================================
+   8) Botón principal (#btnToggle + estado .is-playing)
+   ========================================================= */
+#btnToggle{
+  border-color:rgba(59,130,246,.35);                         /* borde acento */
+  background:linear-gradient(180deg, rgba(59,130,246,.30), rgba(59,130,246,.10));
+}
+#btnToggle:hover{ border-color:rgba(59,130,246,.55); }       /* hover más fuerte */
+#btnToggle.is-playing{
+  border-color:rgba(255,59,48,.50);                          /* estado “parar” */
+  background:linear-gradient(180deg, rgba(255,59,48,.26), rgba(255,59,48,.10));
+}
+
+/* =========================================================
+   9) Botones cámaras
+   ========================================================= */
+#camFront, #camRight, #camLeft, #camBack{
+  padding:9px 10px;                                          /* un poco más compacto */
+  font-weight:800;
+}
+#camFront{
+  border-color:rgba(16,185,129,.35);                         /* marca “front” */
+  background:linear-gradient(180deg, rgba(16,185,129,.18), rgba(255,255,255,.05));
+}
+#camBack{
+  border-color:rgba(255,59,48,.35);                          /* marca “back” */
+  background:linear-gradient(180deg, rgba(255,59,48,.18), rgba(255,255,255,.05));
+}
+
+/* =========================================================
+   10) Texto ayuda + utilidades
+   ========================================================= */
+.hint{
+  margin:0;                                                  /* sin margen extra */
+  font-size:12px;
+  line-height:1.45;
+  color:var(--muted);
+}
+.hint b{ color:rgba(255,255,255,.92); }                      /* resalta palabras */
+
+code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+  font-size:11px;
+  padding:2px 6px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.25);
+  color:rgba(255,255,255,.90);
+}
+
+/* utilidades opcionales (si luego las usas) */
+.badge{
+  display:inline-flex; align-items:center; gap:8px;           /* etiqueta estado */
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.22);
+  color:rgba(255,255,255,.86);
+}
+.badge .dot{
+  width:8px; height:8px; border-radius:99px;                 /* punto estado */
+  background:var(--ok);
+  box-shadow:0 0 0 3px rgba(16,185,129,.18);
+}
+.kbd{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+  font-size:11px;
+  padding:2px 6px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.28);
+  color:rgba(255,255,255,.88);
+}
+
+/* =========================================================
+   11) Capas opcionales (ambiente sin tocar Three.js)
+   ========================================================= */
+.stage-vignette{
+  position:fixed; inset:0;
+  pointer-events:none;                                       /* no bloquea clicks */
+  z-index:2;
+  background:
+    radial-gradient(900px 600px at 50% 40%, transparent 55%, rgba(0,0,0,.35) 100%),
+    radial-gradient(1200px 900px at 50% 130%, rgba(0,0,0,.45), transparent 70%);
+  mix-blend-mode:multiply;
+}
+
+.glow-layer{
+  position:fixed; inset:0;
+  pointer-events:none;
+  z-index:1;
+  background:
+    radial-gradient(700px 500px at 18% 22%, rgba(59,130,246,.16), transparent 65%),
+    radial-gradient(600px 420px at 82% 25%, rgba(255,59,48,.11), transparent 65%),
+    radial-gradient(800px 500px at 50% 85%, rgba(16,185,129,.08), transparent 70%);
+  filter:saturate(1.05);
+  opacity:.95;
+}
+
+/* =========================================================
+   12) Responsive + reduced motion
+   ========================================================= */
+@media (max-width: 720px){
+  #ui{
+    top:12px; left:12px; right:12px;                         /* panel más pegado */
+    width:auto;
+    padding:12px;
+    border-radius:16px;
+  }
+  #ui h1{ font-size:15px; margin-bottom:8px; }               /* título compacto */
+  .row{ gap:8px; margin-bottom:8px; }                        /* menos separación */
+  button{ padding:10px 10px; }                               /* botones más compactos */
+  #camFront, #camRight, #camLeft, #camBack{
+    flex:1 1 calc(50% - 8px);                                /* 2 columnas */
+  }
+}
+
+@media (max-width: 420px){
+  #ui h1{ font-size:14px; }                                  /* aún más pequeño */
+  button{ width:100%; }                                      /* una columna */
+  #camFront, #camRight, #camLeft, #camBack{ flex:1 1 100%; } /* cámaras en columna */
+}
+
+@media (prefers-reduced-motion: reduce){
+  button{ transition:none; }                                 /* respeta accesibilidad */
+}
+
+/* =========================================================
+   13) Scrollbar panel (por si el panel llega a desbordar)
+   ========================================================= */
+#ui{
+  scrollbar-width:thin;                                      /* Firefox */
+  scrollbar-color:rgba(255,255,255,.18) rgba(0,0,0,.12);
+}
+#ui::-webkit-scrollbar{ width:10px; }                        /* WebKit */
+#ui::-webkit-scrollbar-track{
+  background:rgba(0,0,0,.12);
+  border-radius:999px;
+}
+#ui::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.18);
+  border-radius:999px;
+  border:2px solid rgba(0,0,0,.12);
+}
+

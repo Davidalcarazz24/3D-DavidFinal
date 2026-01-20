@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <!-- Se define la codificación para que los acentos y caracteres especiales se vean bien -->
+    <meta charset="utf-8" />
+
+    <!-- Se ajusta el diseño para que sea responsive en móvil y en escritorio -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Este texto sale en la pestaña del navegador -->
+    <title>David – Baile + 4 Cámaras</title>
+
+    <!-- Se carga una hoja de estilos externa por si se quieren separar estilos del HTML -->
+    <link rel="stylesheet" href="styles.css" />
+
+    <style>
+      /* Se fuerza que el documento ocupe toda la altura de la ventana */
+      html,
+      body {
+        height: 100%;
+        margin: 0; /* Se quita el margen por defecto para que no queden bordes raros */
+      }
+
+      body {
+        overflow: hidden; /* Se evita el scroll para que el canvas sea a pantalla completa */
+        background: #0b0f14; /* Fondo oscuro para que la escena destaque más */
+        font-family: system-ui, Arial, sans-serif; /* Tipografía sencilla y legible */
+      }
+
+      #c {
+        display: block; /* Se elimina el espacio inline típico del canvas */
+        width: 100vw; /* Se estira a todo el ancho visible */
+        height: 100vh; /* Se estira a toda la altura visible */
+      }
+
+      #ui {
+        position: absolute; /* Se coloca por encima del canvas sin afectar al flujo */
+        top: 16px; /* Separación desde arriba */
+        left: 16px; /* Separación desde la izquierda */
+        z-index: 10; /* Se asegura que los botones queden delante de la escena */
+        padding: 12px 14px; /* Espacio interno para que no quede apretado */
+        border-radius: 12px; /* Bordes redondeados estilo panel */
+        background: rgba(0, 0, 0, 0.45); /* Fondo semi-transparente para leer sin tapar del todo */
+        color: #fff; /* Texto en blanco para contraste */
+        backdrop-filter: blur(6px); /* Efecto de desenfoque */
+        max-width: 420px; /* Se limita el ancho */
+      }
+
+      #ui h1 {
+        margin: 0 0 10px; /* Aire debajo del título */
+        font-size: 16px; /* Tamaño compacto */
+      }
+
+      .row {
+        display: flex; /* Contenido en fila */
+        gap: 8px; /* Separación */
+        flex-wrap: wrap; /* Wrap si no caben */
+        margin-bottom: 10px; /* Espacio inferior */
+        align-items: center; /* Centrado vertical (para slider) */
+      }
+
+      button {
+        border: 0; /* Sin borde */
+        padding: 8px 10px; /* Tamaño cómodo */
+        border-radius: 10px; /* Redondeo */
+        cursor: pointer; /* Mano */
+        font-weight: 700; /* Texto marcado */
+      }
+
+      button:disabled {
+        opacity: 0.6; /* Se nota desactivado */
+        cursor: not-allowed;
+      }
+
+      .hint {
+        margin: 0;
+        font-size: 12px;
+        opacity: 0.85;
+        line-height: 1.35;
+      }
+
+      /* NUEVO: Control de luminosidad (slider) */
+      .light-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .light-wrap strong {
+        font-size: 12px;
+        opacity: 0.9;
+        white-space: nowrap;
+      }
+
+      #lightLevel {
+        flex: 1;
+        cursor: pointer;
+      }
+
+      #lightValue {
+        font-size: 12px;
+        opacity: 0.9;
+        min-width: 54px;
+        text-align: right;
+        white-space: nowrap;
+      }
+    </style>
+
+    <!-- Se configura el importmap para usar módulos ES y cargar Three.js desde CDN -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.161/build/three.module.js",
+          "jsm/": "https://cdn.jsdelivr.net/npm/three@0.161/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+
+  <body>
+    <!-- Panel de interfaz -->
+    <div id="ui">
+      <h1>David – Baile + 4 Cámaras</h1>
+
+      <!-- Botón principal -->
+      <div class="row">
+        <button id="btnToggle" type="button" disabled>Cargando...</button>
+      </div>
+
+      <!-- Botones de cámara -->
+      <div class="row">
+        <button id="camFront" type="button" disabled>Frente</button>
+        <button id="camRight" type="button" disabled>Derecha</button>
+        <button id="camLeft" type="button" disabled>Izquierda</button>
+        <button id="camBack" type="button" disabled>Detrás</button>
+      </div>
+
+      <!-- NUEVO: Slider de luz (ratón + rueda sobre el slider) -->
+      <div class="row">
+        <div class="light-wrap" title="Arrastra el slider o usa la rueda del ratón encima">
+          <strong>💡 Luz</strong>
+          <input id="lightLevel" type="range" min="20" max="250" step="5" value="100" disabled />
+          <span id="lightValue">100%</span>
+        </div>
+      </div>
+
+      <p class="hint">
+        Arrastra para rotar · Rueda para zoom · <b>WASD</b> para moverte por el ring
+      </p>
+    </div>
+
+    <!-- Canvas -->
+    <canvas id="c"></canvas>
+
+    <!-- Volvemos a cargar main.js (sin boot) -->
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
